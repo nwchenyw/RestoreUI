@@ -8,6 +8,7 @@ namespace Restore.Core
         public string PasswordHash { get; set; }
         public string ProtectDrive { get; set; }
         public string DataDrive { get; set; }
+        public string VmRestorePath { get; set; }
         public string BootEntryGuid { get; set; }
 
         public RestoreConfig()
@@ -18,6 +19,7 @@ namespace Restore.Core
             PasswordHash = "";
             ProtectDrive = "C";
             DataDrive = "D";
+            VmRestorePath = @"C:\RestoreSystem\VMProtected";
             BootEntryGuid = "";
         }
     }

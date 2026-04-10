@@ -14,6 +14,7 @@ namespace Restore.Service
     public partial class RestoreService : ServiceBase
     {
         private RestoreEngine _engine;
+        private VmRestoreManager _vmRestoreManager;
         private BootIntegrationManager _bootManager;
         private string _bootEntryGuid;
         private CancellationTokenSource _pipeCts;
@@ -53,7 +54,16 @@ namespace Restore.Service
                 EnsureBaseVhdGuide(config);
 
                 if (config.Enabled)
+                {
+                    if (_vmSafeMode)
+                    {
+                        PrepareVmSafeBaseline(config);
+                        _vmRestoreManager.RestoreBaseline();
+                        ServiceLogger.Info("VM 安全模式：開機時已套用還原。Path=" + _vmRestoreManager.TargetPath);
+                    }
+                    else
                     EnableProtection(config);
+                }
             }
             catch (Exception ex)
             {
@@ -90,6 +100,7 @@ namespace Restore.Service
             _engine = new RestoreEngine(config.ProtectDrive);
             _bootManager = new BootIntegrationManager();
             _engine.EnsureRestoreFolder();
+            _vmRestoreManager = new VmRestoreManager(_engine.RestoreFolder, config.VmRestorePath);
         }
 
         private void EnsureBaseVhdGuide(RestoreConfig config)
@@ -119,6 +130,7 @@ namespace Restore.Service
             {
                 if (_vmSafeMode)
                 {
+                    PrepareVmSafeBaseline(config);
                     config.Enabled = true;
                     ConfigManager.Save(config);
                     ServiceLogger.Info("VM 安全模式：已標記啟用保護（不執行 VHD/BCD 操作）。");
@@ -181,6 +193,8 @@ namespace Restore.Service
             {
                 if (_vmSafeMode)
                 {
+                    PrepareVmSafeBaseline(config);
+                    _vmRestoreManager.RestoreBaseline();
                     ServiceLogger.Info("VM 安全模式：略過重置磁碟操作。Enabled=" + config.Enabled);
                     return "OK:RESET:VM_SAFE";
                 }
@@ -292,6 +306,13 @@ namespace Restore.Service
             }
 
             return false;
+        }
+
+        private void PrepareVmSafeBaseline(RestoreConfig config)
+        {
+            EnsureEngine(config);
+            _vmRestoreManager.EnsurePaths();
+            _vmRestoreManager.CaptureBaselineIfMissing();
         }
     }
 }

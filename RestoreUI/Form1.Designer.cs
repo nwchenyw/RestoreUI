@@ -38,6 +38,8 @@
             this.btnSetPassword = new System.Windows.Forms.Button();
             this.grpStatus = new System.Windows.Forms.GroupBox();
             this.grpPassword = new System.Windows.Forms.GroupBox();
+            this.chkAutoDetectVm = new System.Windows.Forms.CheckBox();
+            this.chkForceVmSafe = new System.Windows.Forms.CheckBox();
             this.grpStatus.SuspendLayout();
             this.grpPassword.SuspendLayout();
             this.SuspendLayout();
@@ -111,9 +113,11 @@
             this.grpPassword.Controls.Add(this.lblPassword);
             this.grpPassword.Controls.Add(this.txtPassword);
             this.grpPassword.Controls.Add(this.btnSetPassword);
+            this.grpPassword.Controls.Add(this.chkAutoDetectVm);
+            this.grpPassword.Controls.Add(this.chkForceVmSafe);
             this.grpPassword.Location = new System.Drawing.Point(20, 200);
             this.grpPassword.Name = "grpPassword";
-            this.grpPassword.Size = new System.Drawing.Size(440, 100);
+            this.grpPassword.Size = new System.Drawing.Size(440, 150);
             this.grpPassword.TabIndex = 1;
             this.grpPassword.TabStop = false;
             this.grpPassword.Text = "密碼設定";
@@ -145,11 +149,33 @@
             this.btnSetPassword.UseVisualStyleBackColor = true;
             this.btnSetPassword.Click += new System.EventHandler(this.btnSetPassword_Click);
             // 
+            // chkAutoDetectVm
+            // 
+            this.chkAutoDetectVm.AutoSize = true;
+            this.chkAutoDetectVm.Location = new System.Drawing.Point(22, 75);
+            this.chkAutoDetectVm.Name = "chkAutoDetectVm";
+            this.chkAutoDetectVm.Size = new System.Drawing.Size(120, 16);
+            this.chkAutoDetectVm.TabIndex = 3;
+            this.chkAutoDetectVm.Text = "自動偵測虛擬機";
+            this.chkAutoDetectVm.UseVisualStyleBackColor = true;
+            this.chkAutoDetectVm.CheckedChanged += new System.EventHandler(this.chkVmOption_CheckedChanged);
+            // 
+            // chkForceVmSafe
+            // 
+            this.chkForceVmSafe.AutoSize = true;
+            this.chkForceVmSafe.Location = new System.Drawing.Point(22, 105);
+            this.chkForceVmSafe.Name = "chkForceVmSafe";
+            this.chkForceVmSafe.Size = new System.Drawing.Size(126, 16);
+            this.chkForceVmSafe.TabIndex = 4;
+            this.chkForceVmSafe.Text = "強制 VM 安全模式";
+            this.chkForceVmSafe.UseVisualStyleBackColor = true;
+            this.chkForceVmSafe.CheckedChanged += new System.EventHandler(this.chkVmOption_CheckedChanged);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(484, 321);
+            this.ClientSize = new System.Drawing.Size(484, 381);
             this.Controls.Add(this.grpStatus);
             this.Controls.Add(this.grpPassword);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
@@ -177,6 +203,8 @@
         private System.Windows.Forms.Label lblPassword;
         private System.Windows.Forms.TextBox txtPassword;
         private System.Windows.Forms.Button btnSetPassword;
+        private System.Windows.Forms.CheckBox chkAutoDetectVm;
+        private System.Windows.Forms.CheckBox chkForceVmSafe;
     }
 }
 

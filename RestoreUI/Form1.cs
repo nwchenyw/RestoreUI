@@ -9,6 +9,7 @@ namespace RestoreUI
     public partial class Form1 : Form
     {
         private RestoreConfig _config;
+        private bool _isLoadingConfig;
 
         public Form1()
         {
@@ -22,6 +23,7 @@ namespace RestoreUI
 
         private void LoadConfig()
         {
+            _isLoadingConfig = true;
             try
             {
                 _config = ConfigManager.Load();
@@ -30,6 +32,11 @@ namespace RestoreUI
             {
                 _config = new RestoreConfig();
             }
+
+            chkAutoDetectVm.Checked = _config.AutoDetectVm;
+            chkForceVmSafe.Checked = _config.VmSafeMode;
+            _isLoadingConfig = false;
+
             UpdateStatusUI();
         }
 
@@ -44,7 +51,13 @@ namespace RestoreUI
                 string serviceStatus = QueryServiceStatus();
                 bool vmSafe = serviceStatus.IndexOf("VM_SAFE", StringComparison.OrdinalIgnoreCase) >= 0;
                 bool enabled = serviceStatus.StartsWith("STATUS:ENABLED", StringComparison.OrdinalIgnoreCase);
-                if (!baseExists)
+                if (vmSafe)
+                {
+                    statusText = enabled
+                        ? "狀態：已啟用還原（VM 安全模式）"
+                        : "狀態：已停用還原（VM 安全模式）";
+                }
+                else if (!baseExists)
                 {
                     statusText = "狀態：服務已啟動，但缺少 base.vhdx";
                 }
@@ -54,8 +67,6 @@ namespace RestoreUI
                         ? "狀態：已啟用還原（Service）"
                         : "狀態：已停用還原（Service）";
 
-                    if (vmSafe)
-                        statusText += "（VM 安全模式）";
                 }
                 _config.Enabled = enabled;
             }
@@ -241,6 +252,17 @@ namespace RestoreUI
             {
                 MessageBox.Show("啟動服務失敗：" + ex.Message, "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void chkVmOption_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_isLoadingConfig || _config == null)
+                return;
+
+            _config.AutoDetectVm = chkAutoDetectVm.Checked;
+            _config.VmSafeMode = chkForceVmSafe.Checked;
+            ConfigManager.Save(_config);
+            UpdateStatusUI();
         }
     }
 }

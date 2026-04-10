@@ -36,6 +36,7 @@
   <ItemGroup>
     <Compile Include="BootIntegrationManager.cs" />
     <Compile Include="RestoreEngine.cs" />
+    <Compile Include="VmRestoreManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
