@@ -263,6 +263,7 @@ namespace RestoreUI
             _config.VmSafeMode = chkForceVmSafe.Checked;
             ConfigManager.Save(_config);
             UpdateStatusUI();
+            MessageBox.Show("需重啟服務才會完全生效", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 }
