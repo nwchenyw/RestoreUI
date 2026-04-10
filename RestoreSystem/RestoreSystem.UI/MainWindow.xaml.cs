@@ -4,8 +4,13 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using System.Windows.Forms;
 using RestoreSystem.Core;
 using RestoreSystem.Shared;
+using WpfBrushes = System.Windows.Media.Brushes;
+using MessageBox = System.Windows.MessageBox;
+using MessageBoxButton = System.Windows.MessageBoxButton;
+using MessageBoxImage = System.Windows.MessageBoxImage;
 
 namespace RestoreSystem.UI;
 
@@ -13,6 +18,7 @@ public partial class MainWindow : Window
 {
     private readonly List<Grid> _panels;
     private readonly DispatcherTimer _sessionTimer;
+    private readonly NotifyIcon _notifyIcon;
     private int _loginFailCount;
     private bool _isLocked;
     private bool _isAdminMode;
@@ -25,7 +31,19 @@ public partial class MainWindow : Window
         _sessionTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(10) };
         _sessionTimer.Tick += SessionTimer_Tick;
 
+        // 初始化系統匣圖示
+        _notifyIcon = new NotifyIcon
+        {
+            Text = "RestoreSystem 還原系統",
+            Visible = true
+        };
+        _notifyIcon.DoubleClick += NotifyIcon_DoubleClick;
+        _notifyIcon.ContextMenuStrip = CreateContextMenu();
+        SetNotifyIconFromResources();
+
         Loaded += MainWindow_Loaded;
+        StateChanged += MainWindow_StateChanged;
+        Closing += MainWindow_Closing;
         PreviewMouseDown += (_, _) => ResetSessionTimer();
         PreviewKeyDown += (_, _) => ResetSessionTimer();
     }
@@ -34,6 +52,7 @@ public partial class MainWindow : Window
     {
         ShowPanel(DashboardPanel);
         ForceLockUi("請先登入管理模式。");
+        LoadVmSettings();
     }
 
     private void BtnLogin_Click(object sender, RoutedEventArgs e)
@@ -210,6 +229,66 @@ public partial class MainWindow : Window
         _isAdminMode = ChkAdminMode.IsChecked == true && _isAdminMode;
     }
 
+    private void ChkVmSettings_Changed(object sender, RoutedEventArgs e)
+    {
+        if (!_isAdminMode) return;
+
+        try
+        {
+            var config = ConfigManager.Load();
+            config.AutoDetectVirtualMachine = ChkAutoDetectVm.IsChecked == true;
+            config.ForceVmSafeMode = ChkForceVmSafeMode.IsChecked == true;
+            ConfigManager.Save(config);
+
+            UpdateVmDetectionResult();
+            MessageBox.Show("VM 設定已儲存。\n請重新啟動服務以套用變更。", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("儲存 VM 設定失敗：" + ex.Message, "錯誤", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void LoadVmSettings()
+    {
+        try
+        {
+            var config = ConfigManager.Load();
+            ChkAutoDetectVm.IsChecked = config.AutoDetectVirtualMachine;
+            ChkForceVmSafeMode.IsChecked = config.ForceVmSafeMode;
+            UpdateVmDetectionResult();
+        }
+        catch
+        {
+            // 忽略載入錯誤
+        }
+    }
+
+    private void UpdateVmDetectionResult()
+    {
+        try
+        {
+            bool isVm = VirtualMachineDetector.IsRunningInVirtualMachine();
+            string vmType = VirtualMachineDetector.GetVirtualMachineType();
+
+            if (isVm)
+            {
+                TxtVmDetectionResult.Text = $"✓ 偵測到虛擬機環境：{vmType}";
+                TxtVmDetectionResult.Foreground = WpfBrushes.LimeGreen;
+            }
+            else
+            {
+                TxtVmDetectionResult.Text = "⚠ 未偵測到虛擬機環境（實體機或偵測失敗）";
+                TxtVmDetectionResult.Foreground = WpfBrushes.Orange;
+            }
+        }
+        catch
+        {
+            TxtVmDetectionResult.Text = "VM 偵測失敗";
+            TxtVmDetectionResult.Foreground = WpfBrushes.Red;
+        }
+    }
+
     private bool EnsureAdmin()
     {
         if (_isAdminMode && !string.IsNullOrWhiteSpace(_authToken))
@@ -269,14 +348,14 @@ public partial class MainWindow : Window
             TxtBaseStatus.Text = "Base Disk: " + baseState;
             TxtCurrentSnapshot.Text = "Current Snapshot: " + snapshot;
 
-            StatusDot.Fill = protection == "ENABLED" ? Brushes.LimeGreen : Brushes.OrangeRed;
+            StatusDot.Fill = protection == "ENABLED" ? WpfBrushes.LimeGreen : WpfBrushes.OrangeRed;
         }
         catch (Exception ex)
         {
             TxtProtectionStatus.Text = "Protection: SERVICE_OFFLINE";
             TxtBaseStatus.Text = "Base Disk: UNKNOWN";
             TxtCurrentSnapshot.Text = "Current Snapshot: NONE";
-            StatusDot.Fill = Brushes.DarkOrange;
+            StatusDot.Fill = WpfBrushes.DarkOrange;
             if (_isAdminMode)
                 MessageBox.Show("無法取得服務狀態：" + ex.Message, "警告", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
@@ -351,4 +430,127 @@ public partial class MainWindow : Window
         TxtLoginHint.Text = message;
         _sessionTimer.Stop();
     }
+
+    #region 系統匣功能
+
+    private ContextMenuStrip CreateContextMenu()
+    {
+        var menu = new ContextMenuStrip();
+
+        var showItem = new ToolStripMenuItem("顯示主視窗");
+        showItem.Click += (s, e) => ShowMainWindow();
+        showItem.Font = new System.Drawing.Font(showItem.Font, System.Drawing.FontStyle.Bold);
+        menu.Items.Add(showItem);
+
+        menu.Items.Add(new ToolStripSeparator());
+
+        var statusItem = new ToolStripMenuItem("服務狀態");
+        statusItem.Click += (s, e) =>
+        {
+            ShowMainWindow();
+            ShowPanel(DashboardPanel);
+        };
+        menu.Items.Add(statusItem);
+
+        var protectionItem = new ToolStripMenuItem("保護設定");
+        protectionItem.Click += (s, e) =>
+        {
+            ShowMainWindow();
+            ShowPanel(ProtectionPanel);
+        };
+        menu.Items.Add(protectionItem);
+
+        menu.Items.Add(new ToolStripSeparator());
+
+        var exitItem = new ToolStripMenuItem("結束程式");
+        exitItem.Click += (s, e) => ExitApplication();
+        menu.Items.Add(exitItem);
+
+        return menu;
+    }
+
+    private void SetNotifyIconFromResources()
+    {
+        try
+        {
+            // 嘗試從檔案載入圖示
+            var iconPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "app.ico");
+            if (System.IO.File.Exists(iconPath))
+            {
+                _notifyIcon.Icon = new System.Drawing.Icon(iconPath);
+                return;
+            }
+
+            // 如果沒有外部檔案，使用內建的預設圖示
+            var icon = CreateDefaultIcon();
+            _notifyIcon.Icon = icon;
+        }
+        catch
+        {
+            // 如果失敗，使用系統預設圖示
+            _notifyIcon.Icon = System.Drawing.SystemIcons.Application;
+        }
+    }
+
+    private System.Drawing.Icon CreateDefaultIcon()
+    {
+        // 建立一個簡單的 16x16 圖示（綠色方塊代表「保護中」）
+        using var bmp = new System.Drawing.Bitmap(16, 16);
+        using var g = System.Drawing.Graphics.FromImage(bmp);
+
+        g.Clear(System.Drawing.Color.Transparent);
+        g.FillEllipse(System.Drawing.Brushes.LimeGreen, 2, 2, 12, 12);
+        g.DrawEllipse(System.Drawing.Pens.DarkGreen, 2, 2, 12, 12);
+
+        return System.Drawing.Icon.FromHandle(bmp.GetHicon());
+    }
+
+    private void NotifyIcon_DoubleClick(object? sender, EventArgs e)
+    {
+        ShowMainWindow();
+    }
+
+    private void MainWindow_StateChanged(object? sender, EventArgs e)
+    {
+        if (WindowState == WindowState.Minimized)
+        {
+            Hide();
+            _notifyIcon.BalloonTipTitle = "RestoreSystem";
+            _notifyIcon.BalloonTipText = "程式已最小化到系統匣，雙擊圖示可重新開啟。";
+            _notifyIcon.ShowBalloonTip(2000);
+        }
+    }
+
+    private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        // 點擊關閉按鈕時，改為最小化到系統匣
+        e.Cancel = true;
+        WindowState = WindowState.Minimized;
+    }
+
+    private void ShowMainWindow()
+    {
+        Show();
+        WindowState = WindowState.Normal;
+        Activate();
+        Focus();
+    }
+
+    private void ExitApplication()
+    {
+        var result = MessageBox.Show(
+            "確定要結束 RestoreSystem 嗎？",
+            "確認結束",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (result == MessageBoxResult.Yes)
+        {
+            _notifyIcon.Visible = false;
+            _notifyIcon.Dispose();
+            System.Windows.Application.Current.Shutdown();
+        }
+    }
+
+    #endregion
 }

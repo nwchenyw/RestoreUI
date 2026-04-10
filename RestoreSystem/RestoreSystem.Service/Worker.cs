@@ -213,6 +213,20 @@ public class Worker : BackgroundService
 
     private async Task EnableProtectionAsync(RestoreConfig config, CancellationToken ct)
     {
+        // 判斷是否應該使用 VM 安全模式
+        bool useVmSafeMode = config.ForceVmSafeMode || 
+                            (config.AutoDetectVirtualMachine && VirtualMachineDetector.IsRunningInVirtualMachine());
+
+        if (useVmSafeMode)
+        {
+            OperationLogger.Info("偵測到 VM 環境或啟用強制 VM 安全模式，跳過 VHD/BCD 操作。");
+            OperationLogger.Info($"VM 類型: {VirtualMachineDetector.GetVirtualMachineType()}");
+            OperationLogger.Info("保護模式已啟用 (VM 安全模式)。\n");
+            await Task.CompletedTask;
+            return;
+        }
+
+        // 實體機模式：執行完整的 VHD/BCD 操作
         if (!_vhdManager.BaseExists())
         {
             config.Enabled = false;
@@ -263,10 +277,15 @@ public class Worker : BackgroundService
 
     private string BuildStatus(RestoreConfig config)
     {
-        var baseState = _vhdManager.BaseExists() ? "BASE_OK" : "BASE_MISSING";
+        bool useVmSafeMode = config.ForceVmSafeMode || 
+                            (config.AutoDetectVirtualMachine && VirtualMachineDetector.IsRunningInVirtualMachine());
+
+        var baseState = useVmSafeMode ? "VM_MODE" : (_vhdManager.BaseExists() ? "BASE_OK" : "BASE_MISSING");
         var serviceState = config.Enabled ? "ENABLED" : "DISABLED";
         var snapshot = string.IsNullOrWhiteSpace(config.CurrentSnapshotId) ? "NONE" : config.CurrentSnapshotId;
-        return $"STATUS:{serviceState}:{baseState}:{snapshot}";
+        var vmIndicator = useVmSafeMode ? ":VM_SAFE" : string.Empty;
+
+        return $"STATUS:{serviceState}:{baseState}:{snapshot}{vmIndicator}";
     }
 
     private bool TryAuthorize(string payload, RestoreConfig config, out string command)

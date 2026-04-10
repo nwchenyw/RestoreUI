@@ -13,4 +13,8 @@ public sealed class RestoreConfig
     public bool AdminModeEnabled { get; set; }
     public int SessionTimeoutMinutes { get; set; } = 10;
     public int BootTimeoutSeconds { get; set; } = 5;
+
+    // VM 安全模式設定
+    public bool ForceVmSafeMode { get; set; }
+    public bool AutoDetectVirtualMachine { get; set; } = true;
 }

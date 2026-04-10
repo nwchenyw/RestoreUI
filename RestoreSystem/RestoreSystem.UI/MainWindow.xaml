@@ -65,9 +65,20 @@
                 <StackPanel>
                     <TextBlock Text="Settings" Foreground="White" FontSize="28" FontWeight="SemiBold"/>
                     <CheckBox x:Name="ChkAdminMode" Content="Admin Mode" Foreground="White" Margin="0,16,0,0" Checked="ChkAdminMode_Checked" Unchecked="ChkAdminMode_Checked"/>
-                    <TextBlock Text="Password" Foreground="White" Margin="0,10,0,4"/>
-                    <PasswordBox x:Name="PwdSet" Width="240" Height="30"/>
-                    <Button x:Name="BtnSetPassword" Content="Set / Change Password" Width="180" Height="34" Margin="0,10,0,0" Click="BtnSetPassword_Click"/>
+
+                    <Separator Margin="0,20,0,20" Background="#374151"/>
+
+                    <TextBlock Text="Password" Foreground="White" Margin="0,0,0,4"/>
+                    <PasswordBox x:Name="PwdSet" Width="240" Height="30" HorizontalAlignment="Left"/>
+                    <Button x:Name="BtnSetPassword" Content="Set / Change Password" Width="180" Height="34" Margin="0,10,0,0" HorizontalAlignment="Left" Click="BtnSetPassword_Click"/>
+
+                    <Separator Margin="0,20,0,20" Background="#374151"/>
+
+                    <TextBlock Text="虛擬機 (VM) 設定" Foreground="White" FontSize="18" FontWeight="SemiBold"/>
+                    <TextBlock Text="在虛擬機環境中，VHD/BCD 操作可能不穩定或耗時過長。" Foreground="#9CA3AF" Margin="0,6,0,8" TextWrapping="Wrap"/>
+                    <CheckBox x:Name="ChkAutoDetectVm" Content="自動偵測虛擬機" Foreground="White" Margin="0,0,0,8" Checked="ChkVmSettings_Changed" Unchecked="ChkVmSettings_Changed"/>
+                    <CheckBox x:Name="ChkForceVmSafeMode" Content="強制 VM 安全模式" Foreground="White" Checked="ChkVmSettings_Changed" Unchecked="ChkVmSettings_Changed"/>
+                    <TextBlock x:Name="TxtVmDetectionResult" Text="" Foreground="#60A5FA" Margin="0,10,0,0" FontSize="12"/>
                 </StackPanel>
             </Grid>
 
