@@ -219,17 +219,17 @@ public partial class MainWindow : Window
         return false;
     }
 
-    private void ExecuteAdminCommand(string command, string successMessage, bool refreshSnapshots = false)
+    private void ExecuteAdminCommand(string command, string successMessage, bool refreshSnapshots = false, int timeoutMs = 30000)
     {
         if (!EnsureAdmin()) return;
-        ExecuteRawCommand(command, successMessage, refreshSnapshots);
+        ExecuteRawCommand(command, successMessage, refreshSnapshots, timeoutMs);
     }
 
-    private void ExecuteRawCommand(string command, string successMessage, bool refreshSnapshots)
+    private void ExecuteRawCommand(string command, string successMessage, bool refreshSnapshots, int timeoutMs = 30000)
     {
         try
         {
-            var result = PipeClient.SendAuthenticatedRaw(_authToken, command);
+            var result = PipeClient.SendAuthenticatedRaw(_authToken, command, timeoutMs);
             if (!result.StartsWith("OK:", StringComparison.OrdinalIgnoreCase))
             {
                 MessageBox.Show(result, "錯誤", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -241,6 +241,10 @@ public partial class MainWindow : Window
                 RefreshSnapshots();
 
             MessageBox.Show(successMessage, "完成", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (TimeoutException)
+        {
+            MessageBox.Show("服務處理逾時，操作可能仍在進行中。\n請稍候後檢查服務狀態。", "逾時", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         catch (Exception ex)
         {

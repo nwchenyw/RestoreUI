@@ -24,13 +24,24 @@ public static class PipeClient
 
     public static string SendRaw(string command, int timeoutMs = 4000)
     {
-        using var client = new NamedPipeClientStream(".", PipeConstants.PipeName, PipeDirection.InOut);
-        client.Connect(timeoutMs);
+        try
+        {
+            using var client = new NamedPipeClientStream(".", PipeConstants.PipeName, PipeDirection.InOut);
+            client.Connect(timeoutMs);
 
-        using var writer = new StreamWriter(client, Encoding.UTF8, 1024, leaveOpen: true) { AutoFlush = true };
-        using var reader = new StreamReader(client, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen: true);
+            using var writer = new StreamWriter(client, Encoding.UTF8, 1024, leaveOpen: true) { AutoFlush = true };
+            using var reader = new StreamReader(client, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen: true);
 
-        writer.WriteLine(command);
-        return reader.ReadLine() ?? string.Empty;
+            writer.WriteLine(command);
+            return reader.ReadLine() ?? string.Empty;
+        }
+        catch (TimeoutException ex)
+        {
+            throw new TimeoutException($"無法連線到服務：連線逾時（{timeoutMs}ms）。請確認服務是否正在運行。", ex);
+        }
+        catch (IOException ex) when (ex.Message.Contains("等待逾時") || ex.Message.Contains("信號等待逾時"))
+        {
+            throw new TimeoutException($"服務回應逾時（{timeoutMs}ms）。操作可能耗時較長，請稍候再試。", ex);
+        }
     }
 }
