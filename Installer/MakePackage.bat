@@ -56,22 +56,24 @@ if not exist "%SVC_CSPROJ%" (
     exit /b 1
 )
 
-"%MSBUILD_EXE%" "%UI_CSPROJ%" /t:Rebuild /p:Configuration=Release /verbosity:minimal
-if %errorlevel% neq 0 (
-    popd
-    echo [ERROR] Release build failed (UI).
-    pause
-    exit /b 1
-)
-
-"%MSBUILD_EXE%" "%SVC_CSPROJ%" /t:Rebuild /p:Configuration=Release /verbosity:minimal
-if %errorlevel% neq 0 (
-    popd
-    echo [ERROR] Release build failed (Service).
-    pause
-    exit /b 1
-)
+"%MSBUILD_EXE%" "%UI_CSPROJ%" /t:Rebuild /p:Configuration=Release /verbosity:minimal || goto :build_fail_ui
+"%MSBUILD_EXE%" "%SVC_CSPROJ%" /t:Rebuild /p:Configuration=Release /verbosity:minimal || goto :build_fail_service
 popd
+goto :copy_files
+
+:build_fail_ui
+popd
+echo [ERROR] Release build failed (UI).
+pause
+exit /b 1
+
+:build_fail_service
+popd
+echo [ERROR] Release build failed (Service).
+pause
+exit /b 1
+
+:copy_files
 
 echo Copying files to Package...
 copy /Y "%SRC_UI%\RestoreUI.exe" "%PKG_DIR%\" >nul

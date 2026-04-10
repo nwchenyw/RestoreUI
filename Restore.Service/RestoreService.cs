@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.IO.Pipes;
+using System.Management;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,10 +19,21 @@ namespace Restore.Service
         private CancellationTokenSource _pipeCts;
         private Task _pipeServerTask;
         private readonly object _sync = new object();
+        private bool _vmSafeMode;
 
         public RestoreService()
         {
             ServiceName = "RestoreService";
+        }
+
+        internal void StartDebug(string[] args)
+        {
+            OnStart(args ?? new string[0]);
+        }
+
+        internal void StopDebug()
+        {
+            OnStop();
         }
 
         protected override void OnStart(string[] args)
@@ -33,6 +45,10 @@ namespace Restore.Service
             try
             {
                 var config = ConfigManager.Load();
+                _vmSafeMode = config.VmSafeMode || (config.AutoDetectVm && IsVirtualMachine());
+                if (_vmSafeMode)
+                    ServiceLogger.Info("偵測到 VM 環境，已啟用 VM 安全模式（略過 VHD/BCD 變更）。");
+
                 EnsureEngine(config);
                 EnsureBaseVhdGuide(config);
 
@@ -60,7 +76,7 @@ namespace Restore.Service
             try
             {
                 var config = ConfigManager.Load();
-                if (config.Enabled && _engine != null)
+                if (!_vmSafeMode && config.Enabled && _engine != null)
                     _engine.DeleteDiff();
             }
             catch (Exception ex)
@@ -101,6 +117,14 @@ namespace Restore.Service
         {
             lock (_sync)
             {
+                if (_vmSafeMode)
+                {
+                    config.Enabled = true;
+                    ConfigManager.Save(config);
+                    ServiceLogger.Info("VM 安全模式：已標記啟用保護（不執行 VHD/BCD 操作）。");
+                    return;
+                }
+
                 EnsureEngine(config);
                 if (!_engine.BaseExists())
                 {
@@ -129,6 +153,14 @@ namespace Restore.Service
         {
             lock (_sync)
             {
+                if (_vmSafeMode)
+                {
+                    config.Enabled = false;
+                    ConfigManager.Save(config);
+                    ServiceLogger.Info("VM 安全模式：已停用保護（無 VHD/BCD 操作）。");
+                    return;
+                }
+
                 EnsureEngine(config);
 
                 try { _engine.Unmount(); } catch { }
@@ -147,6 +179,12 @@ namespace Restore.Service
         {
             lock (_sync)
             {
+                if (_vmSafeMode)
+                {
+                    ServiceLogger.Info("VM 安全模式：略過重置磁碟操作。Enabled=" + config.Enabled);
+                    return "OK:RESET:VM_SAFE";
+                }
+
                 EnsureEngine(config);
                 _engine.DeleteDiff();
                 if (config.Enabled)
@@ -215,7 +253,7 @@ namespace Restore.Service
                         return "OK:DISABLED";
 
                     case PipeConstants.Status:
-                        return config.Enabled ? "STATUS:ENABLED" : "STATUS:DISABLED";
+                        return (config.Enabled ? "STATUS:ENABLED" : "STATUS:DISABLED") + (_vmSafeMode ? ":VM_SAFE" : string.Empty);
 
                     case PipeConstants.ResetSystem:
                         return ResetSystem(config);
@@ -229,6 +267,31 @@ namespace Restore.Service
                 ServiceLogger.Error("命令執行失敗：" + command, ex);
                 return "ERROR:" + ex.Message;
             }
+        }
+
+        private bool IsVirtualMachine()
+        {
+            try
+            {
+                using (var searcher = new ManagementObjectSearcher("SELECT Manufacturer, Model FROM Win32_ComputerSystem"))
+                {
+                    foreach (ManagementObject obj in searcher.Get())
+                    {
+                        string manufacturer = (obj["Manufacturer"] ?? string.Empty).ToString().ToLowerInvariant();
+                        string model = (obj["Model"] ?? string.Empty).ToString().ToLowerInvariant();
+
+                        if (manufacturer.Contains("vmware") || manufacturer.Contains("microsoft corporation") || manufacturer.Contains("xen") ||
+                            model.Contains("virtual") || model.Contains("vmware") || model.Contains("kvm") || model.Contains("hyper-v"))
+                            return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ServiceLogger.Error("VM 偵測失敗，預設視為實體機。", ex);
+            }
+
+            return false;
         }
     }
 }

@@ -42,17 +42,22 @@ namespace RestoreUI
             if (serviceOnline)
             {
                 string serviceStatus = QueryServiceStatus();
+                bool vmSafe = serviceStatus.IndexOf("VM_SAFE", StringComparison.OrdinalIgnoreCase) >= 0;
+                bool enabled = serviceStatus.StartsWith("STATUS:ENABLED", StringComparison.OrdinalIgnoreCase);
                 if (!baseExists)
                 {
                     statusText = "狀態：服務已啟動，但缺少 base.vhdx";
                 }
                 else
                 {
-                    statusText = serviceStatus == "STATUS:ENABLED"
+                    statusText = enabled
                         ? "狀態：已啟用還原（Service）"
                         : "狀態：已停用還原（Service）";
+
+                    if (vmSafe)
+                        statusText += "（VM 安全模式）";
                 }
-                _config.Enabled = serviceStatus == "STATUS:ENABLED";
+                _config.Enabled = enabled;
             }
             else
             {

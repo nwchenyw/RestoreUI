@@ -88,7 +88,7 @@ if not "%MSBUILD_EXE%"=="" (
     )
 
     "%MSBUILD_EXE%" "%UI_CSPROJ%" /t:Rebuild /p:Configuration=Release /verbosity:minimal
-    if %errorlevel% neq 0 (
+    if errorlevel 1 (
         popd
         echo [ERROR] Release build failed (UI).
         pause
@@ -97,7 +97,7 @@ if not "%MSBUILD_EXE%"=="" (
 
     "%MSBUILD_EXE%" "%SVC_CSPROJ%" /t:Rebuild /p:Configuration=Release /verbosity:minimal
 )
-if %errorlevel% neq 0 (
+if errorlevel 1 (
     popd
     echo [ERROR] Release build failed.
     pause
