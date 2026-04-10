@@ -15,11 +15,16 @@ namespace Restore.Core
         public static RestoreConfig Load()
         {
             if (!File.Exists(ConfigPath))
-                return new RestoreConfig();
+            {
+                var created = new RestoreConfig();
+                Save(created);
+                return created;
+            }
 
             string json = File.ReadAllText(ConfigPath);
             var serializer = new JavaScriptSerializer();
-            return serializer.Deserialize<RestoreConfig>(json);
+            var config = serializer.Deserialize<RestoreConfig>(json);
+            return config ?? new RestoreConfig();
         }
 
         public static void Save(RestoreConfig config)

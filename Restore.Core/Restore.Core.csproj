@@ -37,6 +37,8 @@
   <ItemGroup>
     <Compile Include="AuthManager.cs" />
     <Compile Include="ConfigManager.cs" />
+    <Compile Include="PipeClient.cs" />
+    <Compile Include="PipeConstants.cs" />
     <Compile Include="RestoreConfig.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

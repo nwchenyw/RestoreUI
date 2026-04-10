@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="Top CPR Plus" Manufacturer="TopCPR" Version="1.0.0" UpgradeCode="12345678-1234-1234-1234-1234567890AB">
+    <MajorUpgrade DowngradeErrorMessage="A newer version is already installed." />
+    <MediaTemplate />
+
+    <Feature Id="MainFeature" Title="Top CPR Plus" Level="1">
+      <ComponentGroupRef Id="TopCPRFiles" />
+    </Feature>
+  </Package>
+
+  <Fragment>
+    <Directory Id="ProgramFilesFolder">
+      <Directory Id="INSTALLFOLDER" Name="TopCPR" />
+    </Directory>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="TopCPRFiles" Directory="INSTALLFOLDER">
+      <!-- 實際發佈檔案可用 heat 或手動加入 -->
+    </ComponentGroup>
+  </Fragment>
+</Wix>

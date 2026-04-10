@@ -34,7 +34,11 @@ SetupIconFile=
 WizardStyle=modern
 
 [Languages]
-Name: "chinesesimplified"; MessagesFile: "compiler:Default.isl"
+Name: "chinesetraditional"; MessagesFile: "compiler:Languages\\ChineseTraditional.isl"
+
+[Dirs]
+Name: "C:\\RestoreSystem"; Permissions: administrators-full system-full
+Name: "C:\\RestoreSystem\\Logs"; Permissions: administrators-full system-full
 
 [Files]
 ; UI 主程式
@@ -58,6 +62,8 @@ Name: "desktopicon"; Description: "建立桌面捷徑"; GroupDescription: "其�
 
 [Run]
 ; 安裝完成後註冊並啟動服務
+Filename: "cmd.exe"; Parameters: "/c if not exist C:\\RestoreSystem mkdir C:\\RestoreSystem"; Flags: runhidden waituntilterminated
+Filename: "cmd.exe"; Parameters: "/c icacls C:\\RestoreSystem /grant SYSTEM:(OI)(CI)F Administrators:(OI)(CI)F /T /C"; Flags: runhidden waituntilterminated
 Filename: "sc.exe"; Parameters: "create {#ServiceName} binPath= ""{app}\{#ServiceExeName}"" start= auto DisplayName= ""Restore System Service"""; Flags: runhidden waituntilterminated
 Filename: "sc.exe"; Parameters: "description {#ServiceName} ""開機自動還原系統服務（登入前執行）"""; Flags: runhidden waituntilterminated
 Filename: "sc.exe"; Parameters: "failure {#ServiceName} reset= 86400 actions= restart/60000/restart/60000/restart/60000"; Flags: runhidden waituntilterminated

@@ -34,6 +34,7 @@
             this.btnEnable = new System.Windows.Forms.Button();
             this.btnDisable = new System.Windows.Forms.Button();
             this.btnRestoreNow = new System.Windows.Forms.Button();
+            this.btnStartService = new System.Windows.Forms.Button();
             this.btnSetPassword = new System.Windows.Forms.Button();
             this.grpStatus = new System.Windows.Forms.GroupBox();
             this.grpPassword = new System.Windows.Forms.GroupBox();
@@ -47,6 +48,7 @@
             this.grpStatus.Controls.Add(this.btnEnable);
             this.grpStatus.Controls.Add(this.btnDisable);
             this.grpStatus.Controls.Add(this.btnRestoreNow);
+            this.grpStatus.Controls.Add(this.btnStartService);
             this.grpStatus.Location = new System.Drawing.Point(20, 20);
             this.grpStatus.Name = "grpStatus";
             this.grpStatus.Size = new System.Drawing.Size(440, 160);
@@ -93,6 +95,16 @@
             this.btnRestoreNow.Text = "立即還原";
             this.btnRestoreNow.UseVisualStyleBackColor = true;
             this.btnRestoreNow.Click += new System.EventHandler(this.btnRestoreNow_Click);
+            // 
+            // btnStartService
+            // 
+            this.btnStartService.Location = new System.Drawing.Point(20, 115);
+            this.btnStartService.Name = "btnStartService";
+            this.btnStartService.Size = new System.Drawing.Size(400, 30);
+            this.btnStartService.TabIndex = 4;
+            this.btnStartService.Text = "服務未啟動？一鍵啟動 RestoreService";
+            this.btnStartService.UseVisualStyleBackColor = true;
+            this.btnStartService.Click += new System.EventHandler(this.btnStartService_Click);
             // 
             // grpPassword
             // 
@@ -160,6 +172,7 @@
         private System.Windows.Forms.Button btnEnable;
         private System.Windows.Forms.Button btnDisable;
         private System.Windows.Forms.Button btnRestoreNow;
+        private System.Windows.Forms.Button btnStartService;
         private System.Windows.Forms.GroupBox grpPassword;
         private System.Windows.Forms.Label lblPassword;
         private System.Windows.Forms.TextBox txtPassword;

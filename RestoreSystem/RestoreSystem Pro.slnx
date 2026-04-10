@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="RestoreSystem.Core/RestoreSystem.Core.csproj" />
+  <Project Path="RestoreSystem.Service/RestoreSystem.Service.csproj" />
+  <Project Path="RestoreSystem.Shared/RestoreSystem.Shared.csproj" />
+  <Project Path="RestoreSystem.UI/RestoreSystem.UI.csproj" />
+</Solution>

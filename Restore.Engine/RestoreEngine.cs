@@ -12,17 +12,49 @@ namespace Restore.Engine
 
         public RestoreEngine(string protectDrive = "C")
         {
-            _restoreFolder = protectDrive + @":\RestoreSystem";
+            _restoreFolder = string.Equals(protectDrive, "C", StringComparison.OrdinalIgnoreCase)
+                ? @"C:\RestoreSystem"
+                : protectDrive + @":\RestoreSystem";
             _basePath = Path.Combine(_restoreFolder, "base.vhdx");
             _diffPath = Path.Combine(_restoreFolder, "diff.vhdx");
         }
 
-        public void CreateDiff()
+        public string RestoreFolder
+        {
+            get { return _restoreFolder; }
+        }
+
+        public string BasePath
+        {
+            get { return _basePath; }
+        }
+
+        public string DiffPath
+        {
+            get { return _diffPath; }
+        }
+
+        public void EnsureRestoreFolder()
         {
             if (!Directory.Exists(_restoreFolder))
                 Directory.CreateDirectory(_restoreFolder);
+        }
+
+        public void CreateDiff()
+        {
+            EnsureRestoreFolder();
 
             RunPowerShell("New-VHD -Path '" + _diffPath + "' -ParentPath '" + _basePath + "' -Differencing");
+        }
+
+        public bool CreateBaseIfMissing(int sizeGb = 64)
+        {
+            EnsureRestoreFolder();
+            if (File.Exists(_basePath))
+                return false;
+
+            RunPowerShell("New-VHD -Path '" + _basePath + "' -SizeBytes " + sizeGb + "GB -Dynamic");
+            return true;
         }
 
         public void Mount()

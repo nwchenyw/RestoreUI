@@ -1,0 +1,102 @@
+﻿<Window x:Class="RestoreSystem.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="RestoreSystem Pro" Height="620" Width="980" WindowStartupLocation="CenterScreen"
+        Background="#111827">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Border Background="#1F2937" Grid.Column="0" Padding="16">
+            <StackPanel>
+                <TextBlock Text="RestoreSystem Pro" Foreground="White" FontSize="20" FontWeight="Bold" Margin="0,0,0,20"/>
+                <Button x:Name="BtnNavDashboard" Content="Dashboard" Height="36" Margin="0,0,0,8" Click="BtnNavDashboard_Click"/>
+                <Button x:Name="BtnNavProtection" Content="Protection" Height="36" Margin="0,0,0,8" Click="BtnNavProtection_Click"/>
+                <Button x:Name="BtnNavSnapshots" Content="Snapshots" Height="36" Margin="0,0,0,8" Click="BtnNavSnapshots_Click"/>
+                <Button x:Name="BtnNavBootMode" Content="Boot Mode" Height="36" Margin="0,0,0,8" Click="BtnNavBootMode_Click"/>
+                <Button x:Name="BtnNavSettings" Content="Settings" Height="36" Margin="0,0,0,8" Click="BtnNavSettings_Click"/>
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Column="1" Margin="20">
+            <Grid x:Name="DashboardPanel">
+                <StackPanel>
+                    <TextBlock Text="Dashboard" Foreground="White" FontSize="28" FontWeight="SemiBold"/>
+                    <Border Background="#374151" CornerRadius="8" Padding="16" Margin="0,16,0,0">
+                        <StackPanel>
+                            <TextBlock x:Name="TxtProtectionStatus" Text="Protection: Unknown" Foreground="White" FontSize="16"/>
+                            <TextBlock x:Name="TxtBaseStatus" Text="Base: Unknown" Foreground="White" Margin="0,6,0,0"/>
+                            <TextBlock x:Name="TxtCurrentSnapshot" Text="Current Snapshot: NONE" Foreground="White" Margin="0,6,0,0"/>
+                            <Ellipse x:Name="StatusDot" Width="14" Height="14" Fill="Orange" Margin="0,10,0,0" HorizontalAlignment="Left"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+
+            <Grid x:Name="ProtectionPanel" Visibility="Collapsed">
+                <StackPanel>
+                    <TextBlock Text="Protection" Foreground="White" FontSize="28" FontWeight="SemiBold"/>
+                    <WrapPanel Margin="0,16,0,0">
+                        <Button x:Name="BtnEnable" Content="Enable Protection" Width="180" Height="40" Margin="0,0,10,0" Click="BtnEnable_Click"/>
+                        <Button x:Name="BtnDisable" Content="Disable Protection" Width="180" Height="40" Margin="0,0,10,0" Click="BtnDisable_Click"/>
+                        <Button x:Name="BtnReset" Content="Reset System" Width="180" Height="40" Click="BtnReset_Click"/>
+                    </WrapPanel>
+                </StackPanel>
+            </Grid>
+
+            <Grid x:Name="SnapshotsPanel" Visibility="Collapsed">
+                <StackPanel>
+                    <TextBlock Text="Snapshots" Foreground="White" FontSize="28" FontWeight="SemiBold"/>
+                    <ListBox x:Name="LstSnapshots" Height="300" Margin="0,16,0,0" Background="#374151" Foreground="White" BorderThickness="0"/>
+                    <WrapPanel Margin="0,12,0,0">
+                        <Button x:Name="BtnCreateSnapshot" Content="Create Snapshot" Width="160" Height="36" Margin="0,0,10,0" Click="BtnCreateSnapshot_Click"/>
+                        <Button x:Name="BtnRestoreSnapshot" Content="Restore Snapshot" Width="160" Height="36" Margin="0,0,10,0" Click="BtnRestoreSnapshot_Click"/>
+                        <Button x:Name="BtnDeleteSnapshot" Content="Delete Snapshot" Width="160" Height="36" Click="BtnDeleteSnapshot_Click"/>
+                    </WrapPanel>
+                </StackPanel>
+            </Grid>
+
+            <Grid x:Name="SettingsPanel" Visibility="Collapsed">
+                <StackPanel>
+                    <TextBlock Text="Settings" Foreground="White" FontSize="28" FontWeight="SemiBold"/>
+                    <CheckBox x:Name="ChkAdminMode" Content="Admin Mode" Foreground="White" Margin="0,16,0,0" Checked="ChkAdminMode_Checked" Unchecked="ChkAdminMode_Checked"/>
+                    <TextBlock Text="Password" Foreground="White" Margin="0,10,0,4"/>
+                    <PasswordBox x:Name="PwdSet" Width="240" Height="30"/>
+                    <Button x:Name="BtnSetPassword" Content="Set / Change Password" Width="180" Height="34" Margin="0,10,0,0" Click="BtnSetPassword_Click"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid x:Name="BootModePanel" Visibility="Collapsed">
+                <StackPanel>
+                    <TextBlock Text="Boot Mode" Foreground="White" FontSize="28" FontWeight="SemiBold"/>
+                    <WrapPanel Margin="0,16,0,0">
+                        <Button x:Name="BtnBootNormal" Content="Set Normal Mode" Width="170" Height="36" Margin="0,0,10,0" Click="BtnBootNormal_Click"/>
+                        <Button x:Name="BtnBootRestore" Content="Set Restore Mode" Width="170" Height="36" Margin="0,0,10,0" Click="BtnBootRestore_Click"/>
+                    </WrapPanel>
+                    <TextBlock Text="Boot Timeout (0-30 sec)" Foreground="White" Margin="0,16,0,4"/>
+                    <TextBox x:Name="TxtBootTimeout" Width="120" Height="30" Text="5"/>
+                    <Button x:Name="BtnSetBootTimeout" Content="Apply Timeout" Width="140" Height="34" Margin="0,10,0,0" Click="BtnSetBootTimeout_Click"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+        <Border x:Name="LoginOverlay" Grid.ColumnSpan="2" Background="#CC111827">
+            <Grid>
+                <Border Width="360" Height="240" Background="#1F2937" CornerRadius="10" Padding="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <StackPanel>
+                        <TextBlock Text="Admin Login" Foreground="White" FontSize="22" FontWeight="Bold"/>
+                        <TextBlock Text="請輸入管理密碼" Foreground="#D1D5DB" Margin="0,8,0,0"/>
+                        <PasswordBox x:Name="PwdLogin" Height="32" Margin="0,14,0,0"/>
+                        <Button x:Name="BtnLogin" Content="Login" Height="36" Margin="0,14,0,0" Click="BtnLogin_Click"/>
+                        <TextBlock x:Name="TxtLoginHint" Foreground="#FCA5A5" Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
