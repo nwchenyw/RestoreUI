@@ -304,20 +304,22 @@ public partial class MainWindow : Window
         ExecuteRawCommand(command, successMessage, refreshSnapshots, timeoutMs);
     }
 
-    private void ExecuteRawCommand(string command, string successMessage, bool refreshSnapshots, int timeoutMs = 30000)
+    private async void ExecuteRawCommand(string command, string successMessage, bool refreshSnapshots, int timeoutMs = 30000)
     {
         try
         {
-            var result = PipeClient.SendAuthenticatedRaw(_authToken, command, timeoutMs);
+            // 在背景執行緒執行，避免 UI 凍結
+            var result = await Task.Run(() => PipeClient.SendAuthenticatedRaw(_authToken, command, timeoutMs));
+
             if (!result.StartsWith("OK:", StringComparison.OrdinalIgnoreCase))
             {
                 MessageBox.Show(result, "錯誤", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 
-            RefreshStatus();
+            await RefreshStatusAsync();
             if (refreshSnapshots)
-                RefreshSnapshots();
+                await RefreshSnapshotsAsync();
 
             MessageBox.Show(successMessage, "完成", MessageBoxButton.OK, MessageBoxImage.Information);
         }
@@ -331,14 +333,15 @@ public partial class MainWindow : Window
         }
     }
 
-    private void RefreshStatus()
+    private async Task RefreshStatusAsync()
     {
         if (string.IsNullOrWhiteSpace(_authToken))
             return;
 
         try
         {
-            var status = PipeClient.SendAuthenticated(_authToken, RestoreCommand.Status);
+            // 在背景執行緒執行，避免 UI 凍結
+            var status = await Task.Run(() => PipeClient.SendAuthenticated(_authToken, RestoreCommand.Status, timeoutMs: 5000));
             var parts = status.Split(':');
             var protection = parts.Length > 1 ? parts[1] : "UNKNOWN";
             var baseState = parts.Length > 2 ? parts[2] : "UNKNOWN";
@@ -356,19 +359,26 @@ public partial class MainWindow : Window
             TxtBaseStatus.Text = "Base Disk: UNKNOWN";
             TxtCurrentSnapshot.Text = "Current Snapshot: NONE";
             StatusDot.Fill = WpfBrushes.DarkOrange;
-            if (_isAdminMode)
-                MessageBox.Show("無法取得服務狀態：" + ex.Message, "警告", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+            // 只在登入時才顯示錯誤訊息，避免煩人的彈窗
+            System.Diagnostics.Debug.WriteLine($"服務狀態查詢失敗: {ex.Message}");
         }
     }
 
-    private void RefreshSnapshots()
+    // 保留同步版本供內部使用
+    private void RefreshStatus()
+    {
+        _ = RefreshStatusAsync();
+    }
+
+    private async Task RefreshSnapshotsAsync()
     {
         try
         {
             if (string.IsNullOrWhiteSpace(_authToken))
                 return;
 
-            var result = PipeClient.SendAuthenticated(_authToken, RestoreCommand.ListSnapshots);
+            var result = await Task.Run(() => PipeClient.SendAuthenticated(_authToken, RestoreCommand.ListSnapshots, timeoutMs: 5000));
             LstSnapshots.Items.Clear();
 
             if (!result.StartsWith("OK:SNAPSHOT_LIST:", StringComparison.OrdinalIgnoreCase))
@@ -385,6 +395,12 @@ public partial class MainWindow : Window
         {
             LstSnapshots.Items.Clear();
         }
+    }
+
+    // 保留同步版本供內部使用
+    private void RefreshSnapshots()
+    {
+        _ = RefreshSnapshotsAsync();
     }
 
     private string GetSelectedSnapshotId()
